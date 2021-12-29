@@ -11,7 +11,7 @@ namespace FileEncryptor.WPF.Infrastructure.Commands.Base
             remove => CommandManager.RequerySuggested -= value;
         }
 
-        private bool _Executable;
+        private bool _Executable = true;
 
         public bool Executable
         {
@@ -32,7 +32,7 @@ namespace FileEncryptor.WPF.Infrastructure.Commands.Base
                 Execute(parameter);
         }
 
-        protected virtual bool CanExecute(object parametr) => true;
+        protected virtual bool CanExecute(object parameter) => true;
 
         protected abstract void Execute(object parameter);
 
