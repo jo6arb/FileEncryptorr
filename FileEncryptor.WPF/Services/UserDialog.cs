@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
 using FileEncryptor.WPF.Services.Interface;
 using Microsoft.Win32;
 
@@ -45,5 +46,33 @@ namespace FileEncryptor.WPF.Services
             return true;
 
         }
+
+        public bool SaveFile(string Title, out string SelectedFIle, string DefaultFileName = null, string Filter = "Все файлы (*.*)|*.*")
+        {
+            var file_dialog = new SaveFileDialog
+            {
+                Title = Title,
+                Filter = Filter
+            };
+
+            if (!string.IsNullOrWhiteSpace(DefaultFileName))
+                file_dialog.FileName = DefaultFileName;
+
+            if (file_dialog.ShowDialog() != true)
+            {
+                SelectedFIle = null;
+                return false;
+            }
+
+            SelectedFIle = file_dialog.FileName;
+
+            return true;
+        }
+
+        public void Information(string Title, string Message) => MessageBox.Show(Message, Title, MessageBoxButton.OK, MessageBoxImage.Information);
+
+        public void Warning(string Title, string Message) => MessageBox.Show(Message, Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+
+        public void Error(string Title, string Message) => MessageBox.Show(Message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 }

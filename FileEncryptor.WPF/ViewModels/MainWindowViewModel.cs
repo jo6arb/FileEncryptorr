@@ -7,7 +7,11 @@ namespace FileEncryptor.WPF.ViewModels
 {
     internal class MainWindowViewModel : ViewModel
     {
+
+        private const  string __EncryptedFileSuffix = ".encrypted";
+
         private readonly IUserDialog _UserDialog;
+        private readonly IEncryptor _Encryptor;
 
         #region Title : string - Заголовок окна
 
@@ -73,6 +77,13 @@ namespace FileEncryptor.WPF.ViewModels
         {
             var file = p as FileInfo ?? SelectedFile;
             if(file is null) return;
+
+            var default_file_name = file.FullName + __EncryptedFileSuffix;
+            if(!_UserDialog.SaveFile("Выбор файл для сохранения", out var destination_path, default_file_name)) return;
+
+            _Encryptor.Encrypt(file.FullName, destination_path, Password);
+
+            _UserDialog.Information("Шифрование", "Шифрование файла прошло успешно");
         }
 
         #endregion
@@ -94,12 +105,28 @@ namespace FileEncryptor.WPF.ViewModels
         {
             var file = p as FileInfo ?? SelectedFile;
             if (file is null) return;
+
+            var default_file_name = file.FullName.EndsWith(__EncryptedFileSuffix) 
+                ? file.FullName.Substring(0, file.FullName.Length - __EncryptedFileSuffix.Length)
+                : file.FullName;
+            if (!_UserDialog.SaveFile("Выбор файл для дешифрования", out var destination_path, default_file_name)) return;
+
+            var success = _Encryptor.Dencrypt(file.FullName, destination_path, Password);
+
+            if(success)
+                _UserDialog.Information("Шифрование", "Дешифрование файла выполнено успешно!");
+            else
+                _UserDialog.Warning("Шифрование", "Ошибка при дешифровке файла: указан неверный пароль.");
         }
 
         #endregion
 
         #endregion
 
-        public MainWindowViewModel(IUserDialog UserDialog) { _UserDialog = UserDialog; }
+        public MainWindowViewModel(IUserDialog UserDialog, IEncryptor Encryptor)
+        {
+            _UserDialog = UserDialog;
+            _Encryptor = Encryptor;
+        }
     }
 }
