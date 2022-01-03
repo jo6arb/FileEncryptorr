@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Windows.Input;
 using FileEncryptor.WPF.Infrastructure.Commands;
 using FileEncryptor.WPF.Services.Interface;
@@ -81,9 +82,11 @@ namespace FileEncryptor.WPF.ViewModels
             var default_file_name = file.FullName + __EncryptedFileSuffix;
             if(!_UserDialog.SaveFile("Выбор файл для сохранения", out var destination_path, default_file_name)) return;
 
+            var timer = Stopwatch.StartNew();
             _Encryptor.Encrypt(file.FullName, destination_path, Password);
+            timer.Stop();
 
-            _UserDialog.Information("Шифрование", "Шифрование файла прошло успешно");
+            _UserDialog.Information("Шифрование", $"Шифрование файла прошло успешно за {timer.Elapsed.TotalSeconds:0.##} секунд");
         }
 
         #endregion
@@ -111,10 +114,11 @@ namespace FileEncryptor.WPF.ViewModels
                 : file.FullName;
             if (!_UserDialog.SaveFile("Выбор файл для дешифрования", out var destination_path, default_file_name)) return;
 
+            var timer = Stopwatch.StartNew();
             var success = _Encryptor.Dencrypt(file.FullName, destination_path, Password);
-
+            timer.Stop();
             if(success)
-                _UserDialog.Information("Шифрование", "Дешифрование файла выполнено успешно!");
+                _UserDialog.Information("Шифрование", $"Дешифрование файла выполнено успешно за {timer.Elapsed.TotalSeconds:0.##} секунд");
             else
                 _UserDialog.Warning("Шифрование", "Ошибка при дешифровке файла: указан неверный пароль.");
         }
