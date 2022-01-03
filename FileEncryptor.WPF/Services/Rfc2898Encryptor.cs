@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using FileEncryptor.WPF.Services.Interface;
 
 namespace FileEncryptor.WPF.Services
@@ -67,6 +69,62 @@ namespace FileEncryptor.WPF.Services
             {
                 readed = encrypted_source.Read(buffer, 0, BufferLength);
                 destination.Write(buffer, 0, readed);
+            }
+            while (readed > 0);
+
+            try
+            {
+                destination.FlushFinalBlock();
+            }
+            catch (CryptographicException)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task EncryptAsync(string SourcePath, string DestinationPath, string Password, int BufferLength = 104200)
+        {
+
+            if (!File.Exists(SourcePath)) throw new FileNotFoundException("Файл-источник для процесса шифрования не найден", SourcePath);
+            if (BufferLength <= 0) throw new ArgumentOutOfRangeException(nameof(BufferLength), BufferLength, "Размер буфера чтения должен быть больше 0");
+
+            var encryptor = GetEncryptor(Password);
+
+            await using var destination_encrypted = File.Create(DestinationPath, BufferLength);
+            await using var destination = new CryptoStream(destination_encrypted, encryptor, CryptoStreamMode.Write);
+            await using var source = File.OpenRead(SourcePath);
+
+            var buffer = new byte[BufferLength];
+            int readed;
+            do
+            {
+                readed = await source.ReadAsync(buffer, 0, BufferLength).ConfigureAwait(false);
+                await destination.WriteAsync(buffer, 0, readed).ConfigureAwait(false);
+                Thread.Sleep(1);
+            }
+            while (readed > 0);
+            destination.FlushFinalBlock();
+        }
+
+        public async Task<bool> DencryptAsync(string SourcePath, string DestinationPath, string Password, int BufferLength = 104200)
+        {
+            if (!File.Exists(SourcePath)) throw new FileNotFoundException("Файл-источник для процесса дешифрования не найден", SourcePath);
+            if (BufferLength <= 0) throw new ArgumentOutOfRangeException(nameof(BufferLength), BufferLength, "Размер буфера чтения должен быть больше 0");
+
+            var decryptor = GetDecryptor(Password);
+
+            await using var destination_decrypted = File.Create(DestinationPath, BufferLength);
+            await using var destination = new CryptoStream(destination_decrypted, decryptor, CryptoStreamMode.Write);
+            await using var encrypted_source = File.OpenRead(SourcePath);
+
+            var buffer = new byte[BufferLength];
+            int readed;
+            do
+            {
+                readed = await encrypted_source.ReadAsync(buffer, 0, BufferLength).ConfigureAwait(false);
+                await destination.WriteAsync(buffer, 0, readed).ConfigureAwait(false);
             }
             while (readed > 0);
 
