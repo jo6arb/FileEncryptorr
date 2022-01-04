@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace FileEncryptor.WPF.Services.Interface
 {
@@ -7,8 +9,8 @@ namespace FileEncryptor.WPF.Services.Interface
         void Encrypt(string SourcePath, string DestinationPath, string Password, int BuffeLength = 104200);
         bool Dencrypt(string SourcePath, string DestinationPath, string Password, int BuffeLength = 104200);
 
-        Task EncryptAsync(string SourcePath, string DestinationPath, string Password, int BufferLength = 104200);
+        Task EncryptAsync(string SourcePath, string DestinationPath, string Password, int BufferLength = 104200, IProgress<double> Progress = null, CancellationToken Cancel = default);
 
-        Task<bool> DencryptAsync(string SourcePath, string DestinationPath, string Password, int BuffeLength = 104200);
+        Task<bool> DencryptAsync(string SourcePath, string DestinationPath, string Password, int BuffeLength = 104200, IProgress<double> Progress = null, CancellationToken Cancel = default);
     }
 }

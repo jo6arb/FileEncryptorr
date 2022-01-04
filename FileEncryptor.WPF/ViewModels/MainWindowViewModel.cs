@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
 using FileEncryptor.WPF.Infrastructure.Commands;
@@ -45,6 +46,16 @@ namespace FileEncryptor.WPF.ViewModels
 
         #endregion
 
+        #region ProgressValued : double - Значение прогресса
+
+        /// <summary>Значение прогресса</summary>
+        private double _ProgressValue;
+
+        /// <summary>Значение прогресса</summary>
+        public double ProgressValue { get => _ProgressValue; set => Set(ref _ProgressValue, value); }
+
+        #endregion
+
         #region Команды
 
         #region SelectedFileCommand - команда выбора файла
@@ -85,9 +96,21 @@ namespace FileEncryptor.WPF.ViewModels
 
             var timer = Stopwatch.StartNew();
 
+            var progress = new Progress<double>(persent => ProgressValue = persent);
+
             ((Command) EncryptCommand).Executable = false;
-            await _Encryptor.EncryptAsync(file.FullName, destination_path, Password);
+            ((Command) DecryptCommand).Executable = false;
+            ((Command) SelectFileCommand).Executable = false;
+            try
+            {
+                await _Encryptor.EncryptAsync(file.FullName, destination_path, Password, Progress:progress);
+            }
+            catch (OperationCanceledException )
+            {
+            }
             ((Command)EncryptCommand).Executable = true;
+            ((Command)DecryptCommand).Executable = true;
+            ((Command)SelectFileCommand).Executable = true;
 
             timer.Stop();
 
@@ -121,10 +144,24 @@ namespace FileEncryptor.WPF.ViewModels
 
             var timer = Stopwatch.StartNew();
 
-            ((Command) DecryptCommand).Executable = false;
-            var decryption_task = _Encryptor.DencryptAsync(file.FullName, destination_path, Password);
-            var success = await decryption_task;
+            var progress = new Progress<double>(percent => ProgressValue = percent);
+
+            ((Command)EncryptCommand).Executable = false;
+            ((Command)DecryptCommand).Executable = false;
+            ((Command)SelectFileCommand).Executable = false;
+            var decryption_task = _Encryptor.DencryptAsync(file.FullName, destination_path, Password, Progress: progress);
+            var success = false;
+            try
+            {
+                success = await decryption_task;
+            }
+            catch (OperationCanceledException exception)
+            {
+               
+            }
+            ((Command)EncryptCommand).Executable = true;
             ((Command)DecryptCommand).Executable = true;
+            ((Command)SelectFileCommand).Executable = true;
 
             timer.Stop();
             if(success)
