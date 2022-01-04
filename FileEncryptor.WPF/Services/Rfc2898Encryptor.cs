@@ -4,7 +4,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Media.Media3D;
 using FileEncryptor.WPF.Services.Interface;
 
 namespace FileEncryptor.WPF.Services

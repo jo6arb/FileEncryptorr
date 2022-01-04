@@ -11,7 +11,7 @@ namespace FileEncryptor.WPF.ViewModels
     internal class MainWindowViewModel : ViewModel
     {
 
-        private const  string __EncryptedFileSuffix = ".encrypted";
+        private const string __EncryptedFileSuffix = ".encrypted";
 
         private readonly IUserDialog _UserDialog;
         private readonly IEncryptor _Encryptor;
@@ -155,7 +155,7 @@ namespace FileEncryptor.WPF.ViewModels
             {
                 success = await decryption_task;
             }
-            catch (OperationCanceledException exception)
+            catch (OperationCanceledException)
             {
                
             }
