@@ -6,12 +6,12 @@
         xmlns:l="clr-namespace:FileEncryptor.WPF.Views.Windows"
         Title="Прогресс" 
         Width="435" Height="161" >
-    <Grid Margin="5">
+    <Grid Margin="5" DataContext="{Binding RelativeSource={RelativeSource AncestorType=l:ProgressWindow}}">
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Статус" Margin="5, 20"/>
+        <TextBlock Grid.Row="0" Text="{Binding Status}" Margin="5, 20"/>
 
         <Grid Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
@@ -19,9 +19,9 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <ProgressBar Grid.Column="0" VerticalAlignment="Center" Height="20" IsIndeterminate="True"/>
-            <TextBlock Grid.Column="1" Text="100.0%" Margin="10,0" VerticalAlignment="Center" TextAlignment="Right" MinWidth="40" />
-            <Button Grid.Column="2" Content="Cancel" Margin="10,5" Padding="30,10" Background="WhiteSmoke" />
+            <ProgressBar Grid.Column="0" Name="ProgressView" VerticalAlignment="Center" Height="20" IsIndeterminate="True" Maximum="1"/>
+            <TextBlock Grid.Column="1" Text="{Binding ProgressValue, StringFormat=p1}" Margin="10,0" VerticalAlignment="Center" TextAlignment="Right" MinWidth="40" />
+            <Button Grid.Column="2" Name="CancelButtom" Content="Cancel" Margin="10,5" Padding="30,10" Background="WhiteSmoke" IsEnabled="False" Click="OnCancelClick" />
         </Grid>
     </Grid>
 </Window>

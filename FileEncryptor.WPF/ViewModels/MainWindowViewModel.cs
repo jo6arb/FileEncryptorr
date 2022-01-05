@@ -100,24 +100,29 @@ namespace FileEncryptor.WPF.ViewModels
             var timer = Stopwatch.StartNew();
 
             var progress = new Progress<double>(persent => ProgressValue = persent);
+           var (progress_info, status_info, operation_cancel, close_window) = _UserDialog.ShowProgress("Шифрование");
+           status_info.Report($"Шифрование файла {file.Name}");
 
             _ProcessCancellation = new CancellationTokenSource();
-            
+            var cancel = _ProcessCancellation.Token;
+            var combine_cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancel, operation_cancel);
+
 
             ((Command) EncryptCommand).Executable = false;
             ((Command) DecryptCommand).Executable = false;
             ((Command) SelectFileCommand).Executable = false;
             try
             {
-                await _Encryptor.EncryptAsync(file.FullName, destination_path, Password, Progress: progress, Cancel: _ProcessCancellation.Token);
+                await _Encryptor.EncryptAsync(file.FullName, destination_path, Password, Progress: progress_info, Cancel: combine_cancellation.Token);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e) when(e.CancellationToken == combine_cancellation.Token)
             {
             }
             finally
             {
                 _ProcessCancellation.Dispose();
                 _ProcessCancellation = null;
+                close_window();
             }
             ((Command)EncryptCommand).Executable = true;
             ((Command)DecryptCommand).Executable = true;
@@ -157,17 +162,24 @@ namespace FileEncryptor.WPF.ViewModels
 
             var progress = new Progress<double>(percent => ProgressValue = percent);
             _ProcessCancellation = new CancellationTokenSource();
+            var cancel = _ProcessCancellation.Token;
+
+            var (progress_info, status_info, operation_cancel, close_window) = _UserDialog.ShowProgress("Дешифрование");
+            status_info.Report($"Дешифрование файла {file.Name}");
+
+            var combine_cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancel, operation_cancel);
 
             ((Command)EncryptCommand).Executable = false;
             ((Command)DecryptCommand).Executable = false;
             ((Command)SelectFileCommand).Executable = false;
-            var decryption_task = _Encryptor.DencryptAsync(file.FullName, destination_path, Password, Progress: progress, Cancel: _ProcessCancellation.Token);
+            
+            var decryption_task = _Encryptor.DencryptAsync(file.FullName, destination_path, Password, Progress: progress_info, Cancel: combine_cancellation.Token);
             var success = false;
             try
             {
                 success = await decryption_task;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e) when(e.CancellationToken == combine_cancellation.Token)
             {
 
             }
@@ -175,6 +187,7 @@ namespace FileEncryptor.WPF.ViewModels
             {
                 _ProcessCancellation.Dispose();
                 _ProcessCancellation = null;
+                close_window();
             }
             ((Command)EncryptCommand).Executable = true;
             ((Command)DecryptCommand).Executable = true;
