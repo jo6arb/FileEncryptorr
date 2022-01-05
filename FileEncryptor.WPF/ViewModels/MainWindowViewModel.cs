@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Windows.Input;
 using FileEncryptor.WPF.Infrastructure.Commands;
 using FileEncryptor.WPF.Infrastructure.Commands.Base;
@@ -11,10 +12,12 @@ namespace FileEncryptor.WPF.ViewModels
     internal class MainWindowViewModel : ViewModel
     {
 
-        private const string __EncryptedFileSuffix = ".encrypted";
+        private const  string __EncryptedFileSuffix = ".encrypted";
 
         private readonly IUserDialog _UserDialog;
         private readonly IEncryptor _Encryptor;
+
+        private CancellationTokenSource _ProcessCancellation;
 
         #region Title : string - Заголовок окна
 
@@ -98,15 +101,23 @@ namespace FileEncryptor.WPF.ViewModels
 
             var progress = new Progress<double>(persent => ProgressValue = persent);
 
+            _ProcessCancellation = new CancellationTokenSource();
+            
+
             ((Command) EncryptCommand).Executable = false;
             ((Command) DecryptCommand).Executable = false;
             ((Command) SelectFileCommand).Executable = false;
             try
             {
-                await _Encryptor.EncryptAsync(file.FullName, destination_path, Password, Progress:progress);
+                await _Encryptor.EncryptAsync(file.FullName, destination_path, Password, Progress: progress, Cancel: _ProcessCancellation.Token);
             }
-            catch (OperationCanceledException )
+            catch (OperationCanceledException)
             {
+            }
+            finally
+            {
+                _ProcessCancellation.Dispose();
+                _ProcessCancellation = null;
             }
             ((Command)EncryptCommand).Executable = true;
             ((Command)DecryptCommand).Executable = true;
@@ -145,11 +156,12 @@ namespace FileEncryptor.WPF.ViewModels
             var timer = Stopwatch.StartNew();
 
             var progress = new Progress<double>(percent => ProgressValue = percent);
+            _ProcessCancellation = new CancellationTokenSource();
 
             ((Command)EncryptCommand).Executable = false;
             ((Command)DecryptCommand).Executable = false;
             ((Command)SelectFileCommand).Executable = false;
-            var decryption_task = _Encryptor.DencryptAsync(file.FullName, destination_path, Password, Progress: progress);
+            var decryption_task = _Encryptor.DencryptAsync(file.FullName, destination_path, Password, Progress: progress, Cancel: _ProcessCancellation.Token);
             var success = false;
             try
             {
@@ -157,7 +169,12 @@ namespace FileEncryptor.WPF.ViewModels
             }
             catch (OperationCanceledException)
             {
-               
+
+            }
+            finally
+            {
+                _ProcessCancellation.Dispose();
+                _ProcessCancellation = null;
             }
             ((Command)EncryptCommand).Executable = true;
             ((Command)DecryptCommand).Executable = true;
@@ -169,6 +186,22 @@ namespace FileEncryptor.WPF.ViewModels
             else
                 _UserDialog.Warning("Шифрование", "Ошибка при дешифровке файла: указан неверный пароль.");
         }
+
+        #endregion
+
+        #region Command CancelCommand - Отмена операции
+
+        /// <summary>Отмена операции</summary>
+        private ICommand _CancelCommand;
+
+        /// <summary>Отмена операции</summary>
+        public ICommand CancelCommand => _CancelCommand ??= new LambdaCommand(OnCancelCommandExecuted, CanCancelCommandExecute);
+
+        /// <summary>Проверка возможности выполнения - Отмена операции</summary>
+        private bool CanCancelCommandExecute() => _ProcessCancellation !=null && !_ProcessCancellation.IsCancellationRequested;
+
+        /// <summary>Логика выполнения - Отмена операции</summary>
+        private void OnCancelCommandExecuted() => _ProcessCancellation.Cancel();
 
         #endregion
 

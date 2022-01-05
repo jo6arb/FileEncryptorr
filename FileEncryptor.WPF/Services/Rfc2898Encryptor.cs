@@ -139,6 +139,7 @@ namespace FileEncryptor.WPF.Services
             catch (OperationCanceledException)
             {
                 File.Delete(DestinationPath);
+                Progress?.Report(0);
                 throw;
             }
             catch (Exception error)
@@ -200,10 +201,12 @@ namespace FileEncryptor.WPF.Services
                 {
                     return false;
                 }
+                Progress?.Report(1);
             }
             catch (OperationCanceledException)
             {
                 File.Delete(DestinationPath);
+                Progress?.Report(0);
                 throw;
             }
             catch (Exception error)
